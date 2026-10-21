@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "title": "Multimodal Feature Vector Schema for Health Screening Prototype",
+  "description": "Schema defining early feature-level fusion across webcam computer vision and ESP32 physiological sensors.",
+  "sensor_features": {
+    "heart_rate": { "type": "float", "range": [40.0, 200.0], "unit": "bpm", "description": "Photoplethysmography pulse rate" },
+    "spo2": { "type": "float", "range": [70.0, 100.0], "unit": "percent", "description": "Blood oxygen saturation percentage" },
+    "temperature": { "type": "float", "range": [30.0, 43.0], "unit": "celsius", "description": "Body/skin surface temperature" }
+  },
+  "sensor_feature_list": [
+    "heart_rate",
+    "spo2",
+    "temperature"
+  ],
+  "visual_feature_list": [
+    "left_eye_openness",
+    "right_eye_openness",
+    "mean_openness",
+    "eye_asymmetry",
+    "facial_symmetry_score",
+    "skin_r_mean",
+    "skin_g_mean",
+    "skin_b_mean",
+    "skin_h_mean",
+    "skin_s_mean",
+    "skin_v_mean",
+    "skin_l_mean",
+    "skin_a_mean",
+    "skin_b_lab_mean",
+    "skin_texture_lbp",
+    "overall_quality"
+  ],
+  "multimodal_feature_list": [
+    "left_eye_openness",
+    "right_eye_openness",
+    "mean_openness",
+    "eye_asymmetry",
+    "facial_symmetry_score",
+    "skin_r_mean",
+    "skin_g_mean",
+    "skin_b_mean",
+    "skin_h_mean",
+    "skin_s_mean",
+    "skin_v_mean",
+    "skin_l_mean",
+    "skin_a_mean",
+    "skin_b_lab_mean",
+    "skin_texture_lbp",
+    "overall_quality",
+    "heart_rate",
+    "spo2",
+    "temperature"
+  ]
+}

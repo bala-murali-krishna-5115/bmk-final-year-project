@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "title": "Visual Feature Vector Schema for Health Screening Prototype",
+  "description": "Standardized schema defining visual computer-vision feature vector structure.",
+  "features": {
+    "quality": {
+      "brightness_mean": { "type": "float", "range": [0.0, 255.0], "unit": "pixel_intensity" },
+      "brightness_score": { "type": "float", "range": [0.0, 100.0], "unit": "percent" },
+      "blur_variance": { "type": "float", "min": 0.0, "unit": "laplacian_variance" },
+      "blur_score": { "type": "float", "range": [0.0, 100.0], "unit": "percent" },
+      "face_size_score": { "type": "float", "range": [0.0, 100.0], "unit": "percent" },
+      "stability_score": { "type": "float", "range": [0.0, 100.0], "unit": "percent" },
+      "overall_quality": { "type": "float", "range": [0.0, 100.0], "unit": "percent" }
+    },
+    "face": {
+      "face_detected": { "type": "boolean" },
+      "face_count": { "type": "integer", "min": 0 }
+    },
+    "eyes": {
+      "left_eye_openness": { "type": "float", "range": [0.0, 1.0], "unit": "EAR" },
+      "right_eye_openness": { "type": "float", "range": [0.0, 1.0], "unit": "EAR" },
+      "mean_openness": { "type": "float", "range": [0.0, 1.0], "unit": "EAR" },
+      "eye_asymmetry": { "type": "float", "min": 0.0, "unit": "EAR_diff" },
+      "eye_state": { "type": "string", "enum": ["open", "closed", "unknown"] }
+    },
+    "symmetry": {
+      "facial_symmetry_score": { "type": "float", "range": [0.0, 1.0], "unit": "score" },
+      "left_right_difference": { "type": "float", "min": 0.0, "unit": "ratio_diff" },
+      "valid_for_symmetry": { "type": "boolean" }
+    },
+    "skin": {
+      "skin_r_mean": { "type": "float", "range": [0.0, 255.0] },
+      "skin_g_mean": { "type": "float", "range": [0.0, 255.0] },
+      "skin_b_mean": { "type": "float", "range": [0.0, 255.0] },
+      "skin_h_mean": { "type": "float", "range": [0.0, 179.0] },
+      "skin_s_mean": { "type": "float", "range": [0.0, 255.0] },
+      "skin_v_mean": { "type": "float", "range": [0.0, 255.0] },
+      "skin_l_mean": { "type": "float", "range": [0.0, 255.0] },
+      "skin_a_mean": { "type": "float", "range": [0.0, 255.0] },
+      "skin_b_lab_mean": { "type": "float", "range": [0.0, 255.0] },
+      "skin_texture_lbp": { "type": "float", "min": 0.0, "unit": "variance" }
+    }
+  },
+  "flat_feature_list": [
+    "left_eye_openness",
+    "right_eye_openness",
+    "mean_openness",
+    "eye_asymmetry",
+    "facial_symmetry_score",
+    "skin_r_mean",
+    "skin_g_mean",
+    "skin_b_mean",
+    "skin_h_mean",
+    "skin_s_mean",
+    "skin_v_mean",
+    "skin_l_mean",
+    "skin_a_mean",
+    "skin_b_lab_mean",
+    "skin_texture_lbp",
+    "overall_quality"
+  ]
+}

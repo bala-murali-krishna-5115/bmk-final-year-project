@@ -1,0 +1,7 @@
+{
+  "model_name": "visual_anomaly_detector",
+  "algorithm": "IsolationForest",
+  "contamination": 0.05,
+  "feature_schema_version": "1.0",
+  "disclaimer": "Statistical pattern anomaly detector - NOT a medical diagnostic model."
+}

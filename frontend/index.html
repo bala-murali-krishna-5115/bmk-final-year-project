@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Multimodal Health Screening & Appearance Analysis System</title>
+  
+  <!-- Modern Typography (Outfit & Inter) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Bootstrap 5 & Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  
+  <!-- Custom Dark Glassmorphism Design System -->
+  <link rel="stylesheet" href="/static/css/dashboard.css">
+  
+  <!-- Chart.js for SHAP and Metric Visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="border-bottom border-secondary border-opacity-25 py-3 px-4 glass-panel m-3 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="p-2 rounded-3 bg-gradient bg-primary bg-opacity-25 border border-primary border-opacity-50">
+          <i class="bi bi-person-bounding-box fs-3 text-info"></i>
+        </div>
+        <div>
+          <h1 class="h5 mb-0 fw-bold">AI-Based Multimodal Health Screening System</h1>
+          <span class="text-secondary small">Computer Vision (Eyes &bull; Skin &bull; Hair &bull; Fatigue) &times; Physiological Sensors (ESP-32)</span>
+        </div>
+      </div>
+
+      <div class="d-flex align-items-center gap-3">
+        <span class="status-badge badge-online">
+          <span class="pulse-dot"></span> System Online
+        </span>
+        <span id="activeSessionBadge" class="status-badge bg-dark border border-secondary text-info">
+          SESSION: INITIALIZING...
+        </span>
+        <div class="d-flex gap-2">
+          <input type="text" id="userCodeInput" class="custom-input" style="width: 140px;" value="USR_001" placeholder="User Code">
+          <button id="btnNewSession" class="btn btn-outline-glass btn-sm" title="Create New Session">
+            <i class="bi bi-plus-circle"></i> New Session
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container-fluid px-4 pb-5">
+
+    <!-- Academic Research Disclaimer Alert -->
+    <div class="alert alert-danger bg-danger bg-opacity-10 border border-danger border-opacity-25 text-danger-emphasis rounded-3 p-3 mb-4 d-flex align-items-start gap-3">
+      <i class="bi bi-shield-exclamation fs-3 mt-1 text-danger"></i>
+      <div>
+        <strong class="d-block text-danger fw-bold">PRELIMINARY SCREENING TOOL &mdash; NOT A 100% PRESCRIBED MEDICAL DIAGNOSIS</strong>
+        <span class="small text-white-50">
+          This system evaluates facial computer-vision appearance patterns (dark circles, eye fatigue, blemishes, erythema, hair) and physiological telemetry.
+          It does <strong>NOT</strong> provide medical diagnoses, clinical prescriptions, or replace formal consultation with a licensed physician or dermatologist.
+        </span>
+      </div>
+    </div>
+
+    <!-- 65% Quality Gating Rejection Alert (Dynamically Shown) -->
+    <div id="qualityRejectionAlert" class="alert alert-warning bg-warning bg-opacity-10 border border-warning border-opacity-50 text-warning rounded-3 p-3 mb-4 d-none">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-shield-x fs-4"></i>
+        <strong class="h6 mb-0">Screening Inference Refused (Quality Rule Violation)</strong>
+      </div>
+      <p id="qualityRejectionReason" class="small mb-0 mt-2 text-white-50">
+        Overall data quality score is below the mandatory 65% threshold required for valid ML inference.
+      </p>
+    </div>
+
+    <!-- Main Workspace Grid -->
+    <div class="row g-4">
+
+      <!-- LEFT COLUMN: Computer Vision (Eyes, Skin, Hair, Tiredness) -->
+      <div class="col-lg-4">
+        <div class="glass-panel p-3 h-100 d-flex flex-column gap-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="bi bi-camera me-2 text-info"></i>Camera Appearance Analysis</span>
+            <span id="cameraStatusPill" class="small text-secondary font-monospace">CAMERA OFFLINE</span>
+          </div>
+
+          <!-- Video Stream Container -->
+          <div class="video-container">
+            <video id="webcamVideo" autoplay playsinline muted></video>
+            <canvas id="overlayCanvas"></canvas>
+            <div class="camera-overlay-badge text-white">
+              <i class="bi bi-record-circle text-danger me-1"></i> Live Mesh &amp; ROI Overlay
+            </div>
+          </div>
+
+          <!-- Camera Action Controls -->
+          <div class="d-flex gap-2">
+            <button id="btnStartCamera" class="btn btn-outline-glass flex-grow-1">
+              <i class="bi bi-camera-video"></i> Start Camera
+            </button>
+          </div>
+
+          <!-- Live Visual Findings Matrix -->
+          <div class="bg-black bg-opacity-25 p-3 rounded-3 border border-secondary border-opacity-10 mt-auto">
+            <h6 class="text-secondary small text-uppercase fw-semibold mb-3">Facial Appearance Findings</h6>
+            
+            <!-- Dark Circles -->
+            <div class="p-2 mb-2 rounded bg-dark bg-opacity-50 border border-secondary border-opacity-10">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="small text-white-50"><i class="bi bi-moon-stars text-warning me-1"></i>Under-Eye Dark Circles:</span>
+                <span id="valDarkCircles" class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25">Minimal</span>
+              </div>
+              <div class="small text-muted mt-1" style="font-size: 0.72rem;">Contrast: <span id="valDarknessContrast" class="text-white">0%</span> relative to cheek tone</div>
+            </div>
+
+            <!-- Eye Tiredness -->
+            <div class="p-2 mb-2 rounded bg-dark bg-opacity-50 border border-secondary border-opacity-10">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="small text-white-50"><i class="bi bi-eye text-info me-1"></i>Eye Tiredness &amp; Fatigue:</span>
+                <span id="valTirednessLevel" class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">Alert</span>
+              </div>
+              <div class="small text-muted mt-1" style="font-size: 0.72rem;">Fatigue Score: <span id="valTirednessScore" class="text-white">0%</span> | EAR: <span id="valEyeOpenness" class="text-white">0.28</span></div>
+            </div>
+
+            <!-- Acne & Blemishes -->
+            <div class="p-2 mb-2 rounded bg-dark bg-opacity-50 border border-secondary border-opacity-10">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="small text-white-50"><i class="bi bi-bullseye text-danger me-1"></i>Acne &amp; Visible Blemishes:</span>
+                <span id="valBlemishes" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">Clear</span>
+              </div>
+              <div class="small text-muted mt-1" style="font-size: 0.72rem;">Candidate Lesions: <span id="valLesionCount" class="text-white">0</span> detected</div>
+            </div>
+
+            <!-- Redness / Erythema -->
+            <div class="p-2 mb-2 rounded bg-dark bg-opacity-50 border border-secondary border-opacity-10">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="small text-white-50"><i class="bi bi-palette text-danger me-1"></i>Pigmentation &amp; Redness:</span>
+                <span id="valRedness" class="text-white fw-bold small">Nominal</span>
+              </div>
+              <div class="small text-muted mt-1" style="font-size: 0.72rem;">Erythema Index: <span id="valErythemaIndex" class="text-white">12.5</span></div>
+            </div>
+
+            <!-- Hair & Scalp -->
+            <div class="p-2 rounded bg-dark bg-opacity-50 border border-secondary border-opacity-10">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="small text-white-50"><i class="bi bi-scissors text-secondary me-1"></i>Hairline &amp; Scalp:</span>
+                <span id="valHairline" class="text-white fw-bold small">Normal</span>
+              </div>
+              <div class="small text-muted mt-1" style="font-size: 0.72rem;">Hair Density: <span id="valHairDensity" class="text-white">75%</span></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- MIDDLE COLUMN: ESP-32 Hardware Sensor Telemetry -->
+      <div class="col-lg-4">
+        <div class="glass-panel p-3 h-100 d-flex flex-column gap-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="bi bi-cpu me-2 text-primary"></i>Physiological Sensors (ESP-32)</span>
+            <span id="hwStatusBadge" class="status-badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">
+              HARDWARE DISCONNECTED
+            </span>
+          </div>
+
+          <!-- Hardware Connection Notice -->
+          <div id="hwNoticeBox" class="alert alert-warning bg-warning bg-opacity-10 border border-warning border-opacity-25 text-warning-emphasis small p-2 mb-0 rounded">
+            <i class="bi bi-info-circle me-1"></i> <strong>No rough or fake data:</strong> Vital signs are unavailable until physical ESP-32 sensor node transmits data.
+          </div>
+
+          <!-- Vital Sign 1: Heart Rate -->
+          <div class="glass-panel p-3 bg-opacity-50">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <span class="small text-secondary"><i class="bi bi-heart-pulse-fill heartbeat-icon me-2"></i>Heart Rate (Pulse)</span>
+              <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">MAX30102</span>
+            </div>
+            <div class="d-flex align-items-baseline">
+              <span id="valHeartRate" class="metric-value-lg text-white">--</span>
+              <span class="metric-unit">BPM</span>
+            </div>
+            <span id="statusHeartRate" class="small text-muted" style="font-size: 0.75rem;">Awaiting ESP-32 connection</span>
+          </div>
+
+          <!-- Vital Sign 2: SpO2 Blood Oxygen -->
+          <div class="glass-panel p-3 bg-opacity-50">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <span class="small text-secondary"><i class="bi bi-droplet-half text-info me-2"></i>Blood Oxygen (SpO2)</span>
+              <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">Optical PPG</span>
+            </div>
+            <div class="d-flex align-items-baseline">
+              <span id="valSpO2" class="metric-value-lg text-white">--</span>
+              <span class="metric-unit">%</span>
+            </div>
+            <span id="statusSpO2" class="small text-muted" style="font-size: 0.75rem;">Awaiting ESP-32 connection</span>
+          </div>
+
+          <!-- Vital Sign 3: Body Temperature -->
+          <div class="glass-panel p-3 bg-opacity-50">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <span class="small text-secondary"><i class="bi bi-thermometer-half text-warning me-2"></i>Body / Skin Temperature</span>
+              <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25">MLX90614</span>
+            </div>
+            <div class="d-flex align-items-baseline">
+              <span id="valTemperature" class="metric-value-lg text-white">--</span>
+              <span class="metric-unit">&deg;C</span>
+            </div>
+            <span id="statusTemperature" class="small text-muted" style="font-size: 0.75rem;">Awaiting ESP-32 connection</span>
+          </div>
+
+          <!-- Interactive Sensor Simulator Controls -->
+          <div class="bg-black bg-opacity-25 p-3 rounded-3 border border-secondary border-opacity-10 mt-auto">
+            <h6 class="text-secondary small text-uppercase fw-semibold mb-2">ESP-32 Hardware Test Simulator</h6>
+            <span class="d-block small text-muted mb-2" style="font-size: 0.75rem;">Use during presentations or when hardware is not plugged in:</span>
+            <div class="d-flex gap-2">
+              <select id="sensorModeSelect" class="custom-input flex-grow-1">
+                <option value="normal">Transmit Normal Vitals (72 bpm / 98% / 36.6&deg;C)</option>
+                <option value="elevated">Transmit Elevated Stress (112 bpm / 95% / 37.8&deg;C)</option>
+                <option value="fatigue">Transmit Low Oxygen Fatigue (92 bpm / 92% / 37.0&deg;C)</option>
+                <option value="disconnect">Disconnect Hardware (Simulate Missing)</option>
+              </select>
+              <button id="btnSimulateSensor" class="btn btn-outline-glass btn-sm text-nowrap">
+                <i class="bi bi-broadcast"></i> Send
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: Multimodal ML & Explainable AI -->
+      <div class="col-lg-4">
+        <div class="glass-panel p-3 h-100 d-flex flex-column gap-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="bi bi-diagram-3 me-2 text-warning"></i>Multimodal Screening &amp; XAI</span>
+            <span class="status-badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25">
+              SHAP Active
+            </span>
+          </div>
+
+          <!-- Screening Verdict Banner (Shown after run) -->
+          <div id="verdictCard" class="p-3 rounded-3 border border-secondary border-opacity-20 bg-black bg-opacity-30 d-none">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="small text-secondary">Screening Verdict:</span>
+              <span id="riskBadge" class="status-badge badge-risk-low">LOW RISK</span>
+            </div>
+            <h5 id="verdictText" class="fw-bold text-white mb-2">Nominal Health State</h5>
+
+            <!-- Overall Quality Progress -->
+            <div class="d-flex justify-content-between small text-secondary mb-1">
+              <span>Overall Data Quality:</span>
+              <span id="valOverallQuality" class="text-info fw-bold">92.5%</span>
+            </div>
+            <div class="progress-bar-custom mb-3">
+              <div id="barOverallQuality" class="progress-bar-fill bg-success" style="width: 92.5%;"></div>
+            </div>
+
+            <!-- Isolation Forest Anomaly Progress -->
+            <div class="d-flex justify-content-between small text-secondary mb-1">
+              <span>Isolation Forest Anomaly Score:</span>
+              <span id="valAnomalyScore" class="text-warning fw-bold">0.125</span>
+            </div>
+            <div class="progress-bar-custom">
+              <div id="barAnomalyScore" class="progress-bar-fill bg-warning" style="width: 12.5%;"></div>
+            </div>
+          </div>
+
+          <!-- Tri-Model Comparative Cards -->
+          <div class="row g-2">
+            <div class="col-4">
+              <div class="tri-model-card text-center p-2">
+                <span class="d-block text-secondary small" style="font-size: 0.68rem;">Model A: Sensor</span>
+                <span id="valModelAPred" class="fw-bold small text-white" style="font-size: 0.75rem;">Waiting HW</span>
+                <span id="valModelAConf" class="d-block text-muted" style="font-size: 0.7rem;">--</span>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="tri-model-card text-center p-2">
+                <span class="d-block text-secondary small" style="font-size: 0.68rem;">Model B: Vision</span>
+                <span id="valModelBPred" class="fw-bold small text-white" style="font-size: 0.75rem;">Nominal</span>
+                <span id="valModelBConf" class="d-block text-muted" style="font-size: 0.7rem;">98.6%</span>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="tri-model-card active-champion text-center p-2">
+                <span class="d-block text-info small fw-bold" style="font-size: 0.68rem;">Model C: Fusion</span>
+                <span id="valModelCPred" class="fw-bold small text-info" style="font-size: 0.75rem;">Nominal</span>
+                <span id="valModelCConf" class="d-block text-white" style="font-size: 0.7rem;">Active</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SHAP Feature Attribution Chart -->
+          <div class="flex-grow-1" style="min-height: 180px;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="small text-secondary fw-semibold">Explainable AI: SHAP Feature Contributions</span>
+            </div>
+            <div style="height: 165px;">
+              <canvas id="shapChartCanvas"></canvas>
+            </div>
+          </div>
+
+          <!-- Primary Actions -->
+          <div class="d-flex flex-column gap-2 mt-auto">
+            <button id="btnRunScreening" class="btn btn-primary-glow w-100">
+              <span id="screeningSpinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
+              <i class="bi bi-play-circle-fill me-1"></i> Run Multimodal Screening
+            </button>
+            <button id="btnDownloadPDF" class="btn btn-success-glow w-100" disabled>
+              <i class="bi bi-file-earmark-pdf-fill me-1"></i> Download PDF Research Report
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- BOTTOM ROW 1: Intelligent Health & Wellness Report Box -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="glass-panel p-4 border border-info border-opacity-30">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h5 class="h6 mb-0 fw-bold text-info"><i class="bi bi-heart-pulse me-2"></i>Intelligent Health &amp; Wellness Report</h5>
+            <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">Evidence-Based Appearance &amp; Vitals Analysis</span>
+          </div>
+
+          <!-- Executive Rest Summary Callout -->
+          <div id="restCalloutBox" class="p-3 rounded-3 bg-primary bg-opacity-10 border border-primary border-opacity-25 mb-3">
+            <div class="d-flex align-items-start gap-2">
+              <i class="bi bi-bell-fill text-info fs-5 mt-1"></i>
+              <div>
+                <strong id="repExecutiveSummary" class="text-white d-block">
+                  Run a screening analysis to generate your personalized health and resting assessment.
+                </strong>
+                <span class="small text-white-50">
+                  Synthesizes under-eye dark circles, eye tiredness, acne/blemishes, facial redness, and hardware vitals.
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Findings & Recommendations Grid -->
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="p-3 rounded-3 bg-black bg-opacity-25 border border-secondary border-opacity-10 h-100">
+                <h6 class="text-secondary small text-uppercase fw-semibold mb-2"><i class="bi bi-search me-1 text-info"></i>Detailed Appearance Findings</h6>
+                <ul id="repFindingsList" class="small text-white-50 mb-0 ps-3">
+                  <li>Start camera and run screening to view visual appearance findings.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="p-3 rounded-3 bg-black bg-opacity-25 border border-secondary border-opacity-10 h-100">
+                <h6 class="text-secondary small text-uppercase fw-semibold mb-2"><i class="bi bi-lightbulb me-1 text-warning"></i>Actionable Rest &amp; Skincare Guidance</h6>
+                <ul id="repRecommendationsList" class="small text-white-50 mb-0 ps-3">
+                  <li>Personalized resting and skincare tips will be generated based on your screening results.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Benchmark Research Frameworks Badge Footer -->
+          <div class="mt-3 pt-3 border-top border-secondary border-opacity-10 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span class="small text-secondary" style="font-size: 0.75rem;">
+              Dermatological Benchmark Frameworks: <strong>SCIN Dataset (Google Research)</strong> &bull; <strong>Fitzpatrick17k</strong> &bull; <strong>HAM10000 / ISIC</strong> &bull; <strong>Diverse Dermatology Images (DDI)</strong>
+            </span>
+            <span class="small text-muted" style="font-size: 0.72rem;">
+              Preliminary screening tool &bull; NOT 100% prescribed diagnosis
+            </span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM ROW 2: Recent Screening Sessions Table -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="glass-panel p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="h6 mb-0 fw-bold"><i class="bi bi-clock-history me-2 text-info"></i>Recent Screening Sessions</h5>
+            <span class="text-secondary small">Session History &amp; Auditable PDF Reports</span>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0 align-middle">
+              <thead>
+                <tr class="text-secondary small">
+                  <th>SESSION ID</th>
+                  <th>USER CODE</th>
+                  <th>TIMESTAMP</th>
+                  <th>STATUS</th>
+                  <th>HARDWARE</th>
+                  <th>ANOMALY SCORE</th>
+                  <th>AUDIT REPORT</th>
+                </tr>
+              </thead>
+              <tbody id="sessionsTableBody">
+                <tr>
+                  <td colspan="7" class="text-center text-muted py-3">No recent sessions found. Run a screening to view history.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- Application Controllers -->
+  <script src="/static/js/camera.js"></script>
+  <script src="/static/js/dashboard.js"></script>
+
+</body>
+</html>

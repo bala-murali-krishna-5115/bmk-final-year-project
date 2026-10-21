@@ -7,7 +7,7 @@ python-dotenv>=1.0.0
 SQLAlchemy>=2.0.0
 
 # Computer Vision & Data Processing
-opencv-python>=4.8.0
+opencv-python-headless>=4.8.0
 mediapipe>=0.10.0
 numpy>=1.24.0
 scipy>=1.10.0
@@ -20,6 +20,7 @@ shap>=0.44.0
 
 # Report Generation
 reportlab>=4.0.0
+gunicorn>=22.0.0
 
 # Testing
 pytest>=7.4.0

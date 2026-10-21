@@ -174,6 +174,16 @@ If testing without physical ESP32 hardware, either use the dashboard's built-in 
 python -m hardware.simulator --session-id <SESSION_ID> --mode normal
 ```
 
+### 6. Deploy a Protected Demo on Render
+This academic prototype is not a medical device and must not be used with real patient data. The Render blueprint runs the dashboard behind HTTP Basic Authentication; set a strong `BASIC_AUTH_USERNAME` and `BASIC_AUTH_PASSWORD` when creating the service. Keep the generated `SECRET_KEY` private.
+
+1. Push this repository to GitHub and sign in to [Render](https://render.com/).
+2. In Render, choose **New + → Blueprint**, select this repository, and deploy `render.yaml`.
+3. Enter a demo username and a unique, strong password when Render prompts for the two `sync: false` variables.
+4. Open the deployed `onrender.com` URL and use those credentials in the browser's authentication prompt. The dashboard webcam requires HTTPS, which Render provides.
+
+The free service uses local SQLite on an ephemeral filesystem; saved sessions may be lost when the service restarts or redeploys. Do not enter personal or health-identifying data. The health-check endpoint is public for Render monitoring; all other app routes require authentication. Free Render services may sleep when idle and take time to wake.
+
 ---
 
 ## Documentation Index

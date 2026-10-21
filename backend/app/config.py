@@ -12,7 +12,10 @@ if env_path.exists():
 
 class Config:
     """System configuration parameters."""
+    APP_ENV = os.getenv("APP_ENV", "development").lower()
     SECRET_KEY = os.getenv("SECRET_KEY", "dev_secret_key_12345")
+    BASIC_AUTH_USERNAME = os.getenv("BASIC_AUTH_USERNAME")
+    BASIC_AUTH_PASSWORD = os.getenv("BASIC_AUTH_PASSWORD")
     PORT = int(os.getenv("PORT", 5000))
     
     # SQLite Database URI

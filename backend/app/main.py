@@ -1,6 +1,7 @@
 import os
+import hmac
 from pathlib import Path
-from flask import Flask, jsonify, send_file
+from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 from sqlalchemy import text
 
@@ -26,9 +27,39 @@ def create_app(config_class=Config):
         static_url_path='/static'
     )
     app.config.from_object(config_class)
-    
-    # Enable CORS for cross-origin frontend clients
-    CORS(app)
+
+    production = app.config.get("APP_ENV") == "production"
+    if production and not all((
+        app.config.get("BASIC_AUTH_USERNAME"),
+        app.config.get("BASIC_AUTH_PASSWORD"),
+    )):
+        raise RuntimeError(
+            "BASIC_AUTH_USERNAME and BASIC_AUTH_PASSWORD are required in production."
+        )
+
+    if not production:
+        CORS(app)
+
+    @app.before_request
+    def require_production_authentication():
+        if not production or request.path == "/api/health":
+            return None
+
+        credentials = request.authorization
+        expected_username = app.config["BASIC_AUTH_USERNAME"]
+        expected_password = app.config["BASIC_AUTH_PASSWORD"]
+        if (
+            credentials is None
+            or credentials.username is None
+            or credentials.password is None
+            or not hmac.compare_digest(credentials.username, expected_username)
+            or not hmac.compare_digest(credentials.password, expected_password)
+        ):
+            response = jsonify({"error": "Authentication required"})
+            response.status_code = 401
+            response.headers["WWW-Authenticate"] = 'Basic realm="Health Screening Demo"'
+            return response
+        return None
     
     # Initialize database tables
     with app.app_context():
